@@ -121,10 +121,42 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(a.assemble("LDA #55"), [169, 55])
         self.assertEqual(a.assemble("LDA #$55"), [169, 0x55])
         self.assertEqual(a.assemble("LDA $55"), [165, 0x55])
+        self.assertEqual(a.assemble("LDA $555"), [173, 0x55, 0x5])
 
     def test_assemble_lines(self):
         a = self._asm()
         self.assertEqual(a.assemble("LDA #55\nSBC $33,X"), [169, 55, 245, 0x33])
+
+    def test_labels(self):
+        a = self._asm()
+        self.assertEqual(a.assemble("loop: DEX\nJMP loop"), [202, 76, 0, 0])
+        self.assertEqual(
+            a.assemble("JMP loop\nDEX\nDEX\nDEX\nloop"), 
+            [76, 06, 00, 202, 202, 202]
+        )
+        self.assertEqual(
+            a.assemble("label1: JMP label1\nJMP label2\nlabel2: JMP label1\nJMP label2"),
+            [76, 00, 00, 76, 06, 00, 76, 00, 00, 76, 06, 00]
+        )
+
+    def test_branch(self):
+        a = self._asm()
+        self.assertEqual(a.assemble("label: DEX\nDEX\nBNE label"),
+            [202, 202, 208, 252]
+        )
+        self.assertEqual(a.assemble("BNE label\nDEX\nDEX\nlabel"),
+            [208, 2, 202, 202]
+        )
+
+    def test_variables(self):
+        a = self._asm()
+        self.assertEqual(a.assemble("var = $ff\nlda #var"),[169, 255])
+        self.assertEqual(a.assemble("var = $ff\nlda var"),[165, 255])
+        self.assertEqual(a.assemble("var = $ffff\nlda var"),[173, 255, 255])
+        self.assertEqual(
+            a.assemble("var1 = *\nlda #var1\nvar2 = *\nlda #var2"),
+            [169, 0, 169, 2]
+        )
 
     def tearDown(self):
         pass
