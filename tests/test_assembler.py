@@ -116,6 +116,15 @@ class TestAssembler(unittest.TestCase):
         a = self._asm()
         self.assertEqual(a.getArgument("A"), ('im', 'A'))
 
+    def test_assemble_line(self):
+        a = self._asm()
+        self.assertEqual(a.assemble("LDA #55"), [169, 55])
+        self.assertEqual(a.assemble("LDA #$55"), [169, 0x55])
+        self.assertEqual(a.assemble("LDA $55"), [165, 0x55])
+
+    def test_assemble_lines(self):
+        a = self._asm()
+        self.assertEqual(a.assemble("LDA #55\nSBC $33,X"), [169, 55, 245, 0x33])
 
     def tearDown(self):
         pass

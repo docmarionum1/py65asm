@@ -45,17 +45,26 @@ class Assembler:
     def __init__(self):
         self.symbols = {}
 
-    def assemble(self, asm, output=None):
+    def assemble(self, asm, output_dest=None):
+        out = []
+
         if type(asm) == str:
-            lines = str.split('\n')
+            lines = asm.split('\n')
         elif type(asm) == file:
             lines = list(asm.readlines())
 
-
         for l in lines:
-
-            if l[0] == ";":
+            if l[0] == ";": #Comment
                 continue
+
+            tokens = l.split()
+
+            if tokens[0] in ops:
+                t, n = self.getArgument(tokens[1])
+                out.append(ops[tokens[0]][t])
+                out.append(n)
+
+        return out
 
 
     def getArgument(self, arg):
