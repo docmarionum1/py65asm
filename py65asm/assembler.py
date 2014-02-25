@@ -44,9 +44,15 @@ arg_regex = [
 
 class Assembler:
 
-    def __init__(self):
+    def __init__(self, org=None):
         self.symbols = {}
         self.out = []
+        if org is not None:
+            self.org = org
+            self.start = self.org
+        else:
+            self.org = 0
+            self.start = self.org
 
     def assemble(self, asm, output_dest=None):
         self.out = []
@@ -94,6 +100,22 @@ class Assembler:
             else: #Unresolved variable
                 self.out.append(tokens[0])
                 self.out.append(tokens[1])
+        elif op == ".BYTE":
+            n = self.getNumber(tokens[1])
+            self.out.append(n)
+        elif op == ".WORD":
+            n = self.getNumber(tokens[1])
+            self.out.append(n & 0xff)
+            self.out.append(n >> 8)
+        elif op == ".ORG":
+            n = self.getNumber(tokens[1])
+            #Is this before any code has been generated?  Set the start to this
+            if len(self.out) == 0 or not [i for i in self.out if type(i) != str]:
+                self.start = n
+            else:
+                #self.out.extend([0]**n - len)
+                self.out.append("ORG")
+                self.out.append(str(n))
         else: #Label or variable
             if len(tokens) > 1 and tokens[1] == "=": #variable
                 if tokens[2] == "*": #label = * is equal to lable:
@@ -111,10 +133,12 @@ class Assembler:
     def resolveLabels(self):
         i = 0
         while i < len(self.out):
-            if type(self.out[i]) == str and self.out[i] == "LABEL":
-                self.out.pop(i) #Remove the "LABEL" tag
-                self.symbols[self.out[i]] = i #Add the label to the symbols
 
+            if type(self.out[i]) == str and self.out[i] == "ORG":
+                self.out = self.out[:i] + [0]*(int(self.out[i+1])-i - self.start) + self.out[i+2:]
+            elif type(self.out[i]) == str and self.out[i] == "LABEL":
+                self.out.pop(i) #Remove the "LABEL" tag
+                self.symbols[self.out[i]] = i + self.start #Add the label to the symbols
                 #Resolve this label
                 j = 0
                 l = len(self.out)
@@ -141,7 +165,7 @@ class Assembler:
 
                             new.append(d & 0xff)
                         elif t in ['a', 'ax', 'ay', 'i']:
-                            if j < n:  #Adjust the labels position for the extra byte
+                            if (j + self.start) < n:  #Adjust the labels position for the extra byte
                                 self.symbols[self.out[i]] += 1
                                 n += 1
                                 i += 1
@@ -162,7 +186,7 @@ class Assembler:
     def getNumber(self, arg):
         for i in range(len(num_bases)):
             s = re.match(num_formats[i], arg)
-            if s.group(1):
+            if s and s.group(1):
                 return int(s.group(1), num_bases[i])
 
 

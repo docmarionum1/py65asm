@@ -158,6 +158,34 @@ class TestAssembler(unittest.TestCase):
             [169, 0, 169, 2]
         )
 
+    def test_byte(self):
+        a = self._asm()
+        self.assertEqual(a.assemble(".BYTE $0A"), [0xa])
+
+    def test_word(self):
+        a = self._asm()
+        self.assertEqual(a.assemble(".WORD $0A"), [0xa, 0x00])
+        self.assertEqual(a.assemble(".WORD $AAA"), [0xaa, 0xa])
+
+    def test_org(self):
+        a = self._asm()
+        self.assertEqual(
+            a.assemble(".BYTE 01\n.ORG 10\n.BYTE 02"), 
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+        )
+        self.assertEqual(
+            a.assemble(".ORG $8000\n.BYTE 1\nlabel: .BYTE 2\nJMP label"), 
+            [1, 2, 76, 01, 0x80]
+        )
+        self.assertEqual(
+            a.assemble("a = 5\n.ORG $8000\n.BYTE 1\nlabel: .BYTE 2\nJMP label"), 
+            [1, 2, 76, 01, 0x80]
+        )
+        self.assertEqual(
+            a.assemble(".ORG $8000\n.BYTE 1\n.ORG $8005\nlabel: .BYTE 2\nJMP label"), 
+            [1, 0, 0, 0, 0, 2, 76, 01, 0x80]
+        )
+
     def tearDown(self):
         pass
 
