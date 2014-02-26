@@ -9,7 +9,7 @@ num_formats = [
     '(\w[\w\d]*)'
 ]
 
-num_bases = [16, 2, 8, 10]
+num_bases = [16, 2, 8, 10, None]
 
 arg_regex = [
     ('im', ''.join([
@@ -63,15 +63,17 @@ class Assembler:
             lines = list(asm.readlines())
 
         for l in lines:
-            if l[0] == ";": #Comment
-                continue
+            l = l.strip()
+            if l:
+                if l[0] == ";": #Comment
+                    continue
 
-            if ";" in l: #Strip trailing comment
-                l = l[:l.index(";")]
+                if ";" in l: #Strip trailing comment
+                    l = l[:l.index(";")]
 
-            tokens = l.split()
+                tokens = l.split()
 
-            self.assembleTokens(tokens)
+                self.assembleTokens(tokens)
 
         self.resolveLabels()
 
@@ -102,11 +104,19 @@ class Assembler:
                 self.out.append(tokens[1])
         elif op == ".BYTE":
             n = self.getNumber(tokens[1])
-            self.out.append(n)
+            if n:
+                self.out.append(n)
+            else:
+                self.out.append(tokens[1])
         elif op == ".WORD":
             n = self.getNumber(tokens[1])
-            self.out.append(n & 0xff)
-            self.out.append(n >> 8)
+            print n
+            if n:
+                self.out.append(n & 0xff)
+                self.out.append(n >> 8)
+            else:
+                self.out.append("WORD")
+                self.out.append(tokens[1])
         elif op == ".ORG":
             n = self.getNumber(tokens[1])
             #Is this before any code has been generated?  Set the start to this
@@ -145,6 +155,18 @@ class Assembler:
 
                 while j < len(self.out):
                     if type(self.out[j]) == str and j != i and self.out[i] in self.out[j]:
+
+                        if type(self.out[j-1]) == int: #BYTE
+                            self.out[j] = self.getNumber(self.out[j])
+                            continue
+                        elif self.out[j-1] == "WORD":
+                            print self.out[j-1], self.out[j], self.symbols
+                            n = self.getNumber(self.out[j])
+                            self.out[j-1] = n & 0xff
+                            self.out[j] = n >> 8
+                            continue
+
+
                         new = []
                         t, n = self.getArgument(self.out[j])
                         op = self.out[j-1].upper()
@@ -185,9 +207,12 @@ class Assembler:
 
     def getNumber(self, arg):
         for i in range(len(num_bases)):
-            s = re.match(num_formats[i], arg)
-            if s and s.group(1):
-                return int(s.group(1), num_bases[i])
+            if num_bases[i]:
+                s = re.match(num_formats[i], arg)
+                if s and s.group(1):
+                    return int(s.group(1), num_bases[i])
+            else:
+                return self.symbols.get(arg, None)
 
 
     def getArgument(self, arg):

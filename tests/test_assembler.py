@@ -8,7 +8,7 @@ test_assembler
 Tests for `py65asm` module.
 """
 
-import unittest
+import unittest, os
 
 from py65asm.assembler import Assembler
 
@@ -185,6 +185,20 @@ class TestAssembler(unittest.TestCase):
             a.assemble(".ORG $8000\n.BYTE 1\n.ORG $8005\nlabel: .BYTE 2\nJMP label"), 
             [1, 0, 0, 0, 0, 2, 76, 01, 0x80]
         )
+
+    def test_assemble_file(self):
+        a = self._asm()
+
+        f = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), 
+            "files", "test.asm"
+        )
+
+        out = a.assemble(open(f))
+
+        self.assertEqual(len(out), 0x4000)
+        self.assertEqual(out[:5], [0xa9, 0xff, 0x4c, 0x00, 0xc0])
+        self.assertEqual(out[-3:], [0x99, 0x00, 0xc0])
 
     def tearDown(self):
         pass
