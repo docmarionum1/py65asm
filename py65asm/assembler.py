@@ -77,6 +77,11 @@ class Assembler:
 
         self.resolveLabels()
 
+        if output_dest:
+            with open(output_dest, 'wb') as f:
+                f.write(bytearray(self.out))
+
+
             
         return self.out
 

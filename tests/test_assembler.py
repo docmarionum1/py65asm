@@ -200,6 +200,14 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(out[:5], [0xa9, 0xff, 0x4c, 0x00, 0xc0])
         self.assertEqual(out[-3:], [0x99, 0x00, 0xc0])
 
+    def test_write_file(self):
+        a = self._asm()
+        out = "/tmp/write_test.bin"
+        a.assemble(".byte 72\n.byte 69\n.byte 76\n.byte 76\n.byte 79", out)
+
+        with open(out) as f:
+            self.assertEqual(f.read(), "HELLO")
+            
     def tearDown(self):
         pass
 
