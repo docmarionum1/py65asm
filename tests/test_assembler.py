@@ -27,6 +27,7 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(a.getArgument("#$FF"), ('im', 0xff))
         self.assertEqual(a.getArgument("#%10101011"), ('im', 0b10101011))
         self.assertEqual(a.getArgument("#010"), ('im', 010))
+        self.assertEqual(a.getArgument("#0"), ('im', 0))
         self.assertEqual(a.getArgument("#123"), ('im', 123))
         self.assertEqual(a.getArgument("#var"), ('im', a.symbols['var']))
 
@@ -75,6 +76,7 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(a.getArgument("01110,X"), ('ax', 01110))
         self.assertEqual(a.getArgument("1234,X"), ('ax', 1234))
         self.assertEqual(a.getArgument("var,X"), ('ax', a.symbols['var']))
+        self.assertEqual(a.getArgument("$200,x"), ('ax', 0x200))
 
     def test_ay_argument(self):
         a = self._asm()
@@ -93,6 +95,7 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(a.getArgument("(010,X)"), ('ix', 010))
         self.assertEqual(a.getArgument("(123,X)"), ('ix', 123))
         self.assertEqual(a.getArgument("(var,X)"), ('ix', a.symbols['var']))
+        self.assertEqual(a.getArgument("($200,X)"), ('ix', 0x200))
 
     def test_iy_argument(self):
         a = self._asm()
@@ -112,6 +115,8 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(a.getArgument("(1234)"), ('i', 1234))
         self.assertEqual(a.getArgument("(var)"), ('i', a.symbols['var']))
 
+
+
     def test_A_argument(self):
         a = self._asm()
         self.assertEqual(a.getArgument("A"), ('im', 'A'))
@@ -130,10 +135,12 @@ class TestAssembler(unittest.TestCase):
     def test_labels(self):
         a = self._asm()
         self.assertEqual(a.assemble("loop: DEX\nJMP loop"), [202, 76, 0, 0])
+        a = self._asm()
         self.assertEqual(
             a.assemble("JMP loop\nDEX\nDEX\nDEX\nloop"), 
             [76, 06, 00, 202, 202, 202]
         )
+        a = self._asm()
         self.assertEqual(
             a.assemble("label1: JMP label1\nJMP label2\nlabel2: JMP label1\nJMP label2"),
             [76, 00, 00, 76, 06, 00, 76, 00, 00, 76, 06, 00]
@@ -144,6 +151,7 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(a.assemble("label: DEX\nDEX\nBNE label"),
             [202, 202, 208, 252]
         )
+        a = self._asm()
         self.assertEqual(a.assemble("BNE label\nDEX\nDEX\nlabel"),
             [208, 2, 202, 202]
         )
@@ -155,7 +163,7 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(a.assemble("var = $ffff\nlda var"),[173, 255, 255])
         self.assertEqual(
             a.assemble("var1 = *\nlda #var1\nvar2 = *\nlda #var2"),
-            [169, 0, 169, 2]
+            [169, 0, 0, 169, 3, 0]
         )
 
     def test_byte(self):
@@ -207,6 +215,10 @@ class TestAssembler(unittest.TestCase):
 
         with open(out) as f:
             self.assertEqual(f.read(), "HELLO")
+
+    def test_lda_0(self):
+        a = self._asm()
+        self.assertEqual(a.assemble("lda #0"), [169, 0])
             
     def tearDown(self):
         pass

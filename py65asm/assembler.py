@@ -19,20 +19,20 @@ arg_regex = [
         '^(?:', '|'.join(num_formats), ')$'
     ])),
     ('zx', ''.join([
-        '^(?:', '|'.join(num_formats), ')', ',X$'
+        '^(?:', '|'.join(num_formats), ')', ',[xX]$'
     ])),
     ('zy', ''.join([
-        '^(?:', '|'.join(num_formats), ')', ',Y$'
+        '^(?:', '|'.join(num_formats), ')', ',[yY]$'
     ])),
     ('ix', ''.join([
         '^\(', '(?:',
         '|'.join(num_formats),
-        ')', ',X\)$',
+        ')', ',[xX]\)$',
     ])),
     ('iy', ''.join([
         '^\(', '(?:',
         '|'.join(num_formats),
-        ')', '\),Y$',
+        ')', '\),[yY]$',
     ])),
     ('i', ''.join([
         '^\(', '(?:',
@@ -93,7 +93,7 @@ class Assembler:
                 return
 
             t, n = self.getArgument(tokens[1])
-            if n:
+            if n is not None:
                 # If zero page is not available switch to absolute
                 if t not in ops[op] and t == 'z': 
                     t = 'a'
@@ -107,6 +107,8 @@ class Assembler:
             else: #Unresolved variable
                 self.out.append(tokens[0])
                 self.out.append(tokens[1])
+                if op not in ["BCC", "BCS", "BEQ", "BMI", "BNE", "BPL", "BVC"]:
+                    self.out.append("") #Create a blank space to make sure that the length is correct.
         elif op == ".BYTE":
             n = self.getNumber(tokens[1])
             if n:
@@ -115,7 +117,6 @@ class Assembler:
                 self.out.append(tokens[1])
         elif op == ".WORD":
             n = self.getNumber(tokens[1])
-            print n
             if n:
                 self.out.append(n & 0xff)
                 self.out.append(n >> 8)
@@ -159,53 +160,50 @@ class Assembler:
                 l = len(self.out)
 
                 while j < len(self.out):
-                    if type(self.out[j]) == str and j != i and self.out[i] in self.out[j]:
+                    if type(self.out[j]) == str and j != i and \
+                        re.search("^[\(#]*%s([\),]|$)" % self.out[i], self.out[j]):
 
                         if type(self.out[j-1]) == int: #BYTE
                             self.out[j] = self.getNumber(self.out[j])
                             continue
                         elif self.out[j-1] == "WORD":
-                            print self.out[j-1], self.out[j], self.symbols
                             n = self.getNumber(self.out[j])
                             self.out[j-1] = n & 0xff
                             self.out[j] = n >> 8
                             continue
 
-
                         new = []
                         t, n = self.getArgument(self.out[j])
                         op = self.out[j-1].upper()
-                        # If zero page is not available switch to absolute
-                        if t not in ops[op] and t == 'z': 
-                            t = 'a'
-
-                        new.append(ops[op][t])
 
                         if op in ["BCC", "BCS", "BEQ", "BMI", "BNE", "BPL", "BVC"]:
-                            if n < j:
-                                d = n - j
+                            new.append(ops[op]['z'])
+                            c = j + self.start
+                            if n < c:
+                                d = n - c
                             else:
-                                d = n - j - 1
+                                d = n - c - 1
 
                             if d > 127 or d < -128:
                                     raise Exception("Branch target too far")
 
                             new.append(d & 0xff)
-                        elif t in ['a', 'ax', 'ay', 'i']:
-                            if (j + self.start) < n:  #Adjust the labels position for the extra byte
-                                self.symbols[self.out[i]] += 1
-                                n += 1
-                                i += 1
+
+                            self.out = self.out[:j-1] + new + self.out[j+1:]
+
+                        else:
+                            if 'z' in t:
+                                t = t.replace("z", "a")                            
+                            new.append(ops[op][t])
+
                             new.append(n & 0xff)
                             new.append(n >> 8)
-                        else:
-                            new.append(n)
 
-                        self.out = self.out[:j-1] + new + self.out[j+1:]
+                            self.out = self.out[:j-1] + new + self.out[j+2:]
 
                     j += 1
+
                 self.out.pop(i)
-                continue
 
             i += 1
 
@@ -242,7 +240,6 @@ class Assembler:
                 elif s.group(5):    
                     t, n, v  = (r[0], self.symbols.get(s.group(5), None), s.group(5))
                     break
-
 
         if t[0] == "z" and (n > 0xff or len(v) == 4):
             t = t.replace("z", "a")
