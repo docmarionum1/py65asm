@@ -25,6 +25,7 @@ class TestAssembler(unittest.TestCase):
         a = self._asm()
         a.symbols['var'] = 0x55
         self.assertEqual(a.getArgument("#$FF"), ('im', 0xff))
+        self.assertEqual(a.getArgument("#-1"), ('im', 0xff))
         self.assertEqual(a.getArgument("#%10101011"), ('im', 0b10101011))
         self.assertEqual(a.getArgument("#010"), ('im', 010))
         self.assertEqual(a.getArgument("#0"), ('im', 0))

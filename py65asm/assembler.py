@@ -5,7 +5,7 @@ num_formats = [
     '\$([\dabcdefABCDEF]{1,4})',
     '%([01]{1,16})',
     '0([01234567]{1,6})',
-    '(\d{1,5})',
+    '(-*\d{1,5})',
     '(\w[\w\d]*)'
 ]
 
@@ -243,6 +243,9 @@ class Assembler:
 
         if t[0] == "z" and (n > 0xff or len(v) == 4):
             t = t.replace("z", "a")
+
+        if n is not None and n < 0:
+            n = n & 0xff
 
         return t, n
 
