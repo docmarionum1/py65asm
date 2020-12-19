@@ -27,7 +27,7 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(a.getArgument("#$FF"), ('im', 0xff))
         self.assertEqual(a.getArgument("#-1"), ('im', 0xff))
         self.assertEqual(a.getArgument("#%10101011"), ('im', 0b10101011))
-        self.assertEqual(a.getArgument("#010"), ('im', 010))
+        self.assertEqual(a.getArgument("#010"), ('im', 0o10))
         self.assertEqual(a.getArgument("#0"), ('im', 0))
         self.assertEqual(a.getArgument("#123"), ('im', 123))
         self.assertEqual(a.getArgument("#var"), ('im', a.symbols['var']))
@@ -37,7 +37,7 @@ class TestAssembler(unittest.TestCase):
         a.symbols['var'] = 0x55
         self.assertEqual(a.getArgument("$FF"), ('z', 0xff))
         self.assertEqual(a.getArgument("%10101011"), ('z', 0b10101011))
-        self.assertEqual(a.getArgument("010"), ('z', 010))
+        self.assertEqual(a.getArgument("010"), ('z', 0o10))
         self.assertEqual(a.getArgument("123"), ('z', 123))
         self.assertEqual(a.getArgument("var"), ('z', a.symbols['var']))
 
@@ -46,7 +46,7 @@ class TestAssembler(unittest.TestCase):
         a.symbols['var'] = 0x55
         self.assertEqual(a.getArgument("$FF,X"), ('zx', 0xff))
         self.assertEqual(a.getArgument("%10101011,X"), ('zx', 0b10101011))
-        self.assertEqual(a.getArgument("010,X"), ('zx', 010))
+        self.assertEqual(a.getArgument("010,X"), ('zx', 0o10))
         self.assertEqual(a.getArgument("123,X"), ('zx', 123))
         self.assertEqual(a.getArgument("var,X"), ('zx', a.symbols['var']))
 
@@ -55,7 +55,7 @@ class TestAssembler(unittest.TestCase):
         a.symbols['var'] = 0x55
         self.assertEqual(a.getArgument("$FF,Y"), ('zy', 0xff))
         self.assertEqual(a.getArgument("%10101011,Y"), ('zy', 0b10101011))
-        self.assertEqual(a.getArgument("010,Y"), ('zy', 010))
+        self.assertEqual(a.getArgument("010,Y"), ('zy', 0o10))
         self.assertEqual(a.getArgument("123,Y"), ('zy', 123))
         self.assertEqual(a.getArgument("var,Y"), ('zy', a.symbols['var']))
 
@@ -65,7 +65,7 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(a.getArgument("$FFFF"), ('a', 0xffff))
         self.assertEqual(a.getArgument("$00FF"), ('a', 0x00ff))
         self.assertEqual(a.getArgument("%1010101110101011"), ('a', 0b1010101110101011))
-        self.assertEqual(a.getArgument("01110"), ('a', 01110))
+        self.assertEqual(a.getArgument("01110"), ('a', 0o1110))
         self.assertEqual(a.getArgument("1234"), ('a', 1234))
         self.assertEqual(a.getArgument("var"), ('a', a.symbols['var']))
 
@@ -74,7 +74,7 @@ class TestAssembler(unittest.TestCase):
         a.symbols['var'] = 0x555
         self.assertEqual(a.getArgument("$FFFF,X"), ('ax', 0xffff))
         self.assertEqual(a.getArgument("%1010101110101011,X"), ('ax', 0b1010101110101011))
-        self.assertEqual(a.getArgument("01110,X"), ('ax', 01110))
+        self.assertEqual(a.getArgument("01110,X"), ('ax', 0o1110))
         self.assertEqual(a.getArgument("1234,X"), ('ax', 1234))
         self.assertEqual(a.getArgument("var,X"), ('ax', a.symbols['var']))
         self.assertEqual(a.getArgument("$200,x"), ('ax', 0x200))
@@ -84,7 +84,7 @@ class TestAssembler(unittest.TestCase):
         a.symbols['var'] = 0x555
         self.assertEqual(a.getArgument("$FFFF,Y"), ('ay', 0xffff))
         self.assertEqual(a.getArgument("%1010101110101011,Y"), ('ay', 0b1010101110101011))
-        self.assertEqual(a.getArgument("01110,Y"), ('ay', 01110))
+        self.assertEqual(a.getArgument("01110,Y"), ('ay', 0o1110))
         self.assertEqual(a.getArgument("1234,Y"), ('ay', 1234))
         self.assertEqual(a.getArgument("var,Y"), ('ay', a.symbols['var']))
 
@@ -93,7 +93,7 @@ class TestAssembler(unittest.TestCase):
         a.symbols['var'] = 0x55
         self.assertEqual(a.getArgument("($FF,X)"), ('ix', 0xff))
         self.assertEqual(a.getArgument("(%10101011,X)"), ('ix', 0b10101011))
-        self.assertEqual(a.getArgument("(010,X)"), ('ix', 010))
+        self.assertEqual(a.getArgument("(010,X)"), ('ix', 0o10))
         self.assertEqual(a.getArgument("(123,X)"), ('ix', 123))
         self.assertEqual(a.getArgument("(var,X)"), ('ix', a.symbols['var']))
         self.assertEqual(a.getArgument("($200,X)"), ('ix', 0x200))
@@ -103,7 +103,7 @@ class TestAssembler(unittest.TestCase):
         a.symbols['var'] = 0x55
         self.assertEqual(a.getArgument("($FF),Y"), ('iy', 0xff))
         self.assertEqual(a.getArgument("(%10101011),Y"), ('iy', 0b10101011))
-        self.assertEqual(a.getArgument("(010),Y"), ('iy', 010))
+        self.assertEqual(a.getArgument("(010),Y"), ('iy', 0o10))
         self.assertEqual(a.getArgument("(123),Y"), ('iy', 123))
         self.assertEqual(a.getArgument("(var),Y"), ('iy', a.symbols['var']))
 
@@ -112,7 +112,7 @@ class TestAssembler(unittest.TestCase):
         a.symbols['var'] = 0x555
         self.assertEqual(a.getArgument("($FFFF)"), ('i', 0xffff))
         self.assertEqual(a.getArgument("(%1010101110101011)"), ('i', 0b1010101110101011))
-        self.assertEqual(a.getArgument("(01110)"), ('i', 01110))
+        self.assertEqual(a.getArgument("(01110)"), ('i', 0o1110))
         self.assertEqual(a.getArgument("(1234)"), ('i', 1234))
         self.assertEqual(a.getArgument("(var)"), ('i', a.symbols['var']))
 
@@ -138,7 +138,7 @@ class TestAssembler(unittest.TestCase):
         self.assertEqual(a.assemble("loop: DEX\nJMP loop"), [202, 76, 0, 0])
         a = self._asm()
         self.assertEqual(
-            a.assemble("JMP loop\nDEX\nDEX\nDEX\nloop"), 
+            a.assemble("JMP loop\nDEX\nDEX\nDEX\nloop"),
             [76, 06, 00, 202, 202, 202]
         )
         a = self._asm()
@@ -179,19 +179,19 @@ class TestAssembler(unittest.TestCase):
     def test_org(self):
         a = self._asm()
         self.assertEqual(
-            a.assemble(".BYTE 01\n.ORG 10\n.BYTE 02"), 
+            a.assemble(".BYTE 01\n.ORG 10\n.BYTE 02"),
             [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
         )
         self.assertEqual(
-            a.assemble(".ORG $8000\n.BYTE 1\nlabel: .BYTE 2\nJMP label"), 
+            a.assemble(".ORG $8000\n.BYTE 1\nlabel: .BYTE 2\nJMP label"),
             [1, 2, 76, 01, 0x80]
         )
         self.assertEqual(
-            a.assemble("a = 5\n.ORG $8000\n.BYTE 1\nlabel: .BYTE 2\nJMP label"), 
+            a.assemble("a = 5\n.ORG $8000\n.BYTE 1\nlabel: .BYTE 2\nJMP label"),
             [1, 2, 76, 01, 0x80]
         )
         self.assertEqual(
-            a.assemble(".ORG $8000\n.BYTE 1\n.ORG $8005\nlabel: .BYTE 2\nJMP label"), 
+            a.assemble(".ORG $8000\n.BYTE 1\n.ORG $8005\nlabel: .BYTE 2\nJMP label"),
             [1, 0, 0, 0, 0, 2, 76, 01, 0x80]
         )
 
@@ -199,7 +199,7 @@ class TestAssembler(unittest.TestCase):
         a = self._asm()
 
         f = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), 
+            os.path.dirname(os.path.realpath(__file__)),
             "files", "test.asm"
         )
 
@@ -220,7 +220,7 @@ class TestAssembler(unittest.TestCase):
     def test_lda_0(self):
         a = self._asm()
         self.assertEqual(a.assemble("lda #0"), [169, 0])
-            
+
     def tearDown(self):
         pass
 

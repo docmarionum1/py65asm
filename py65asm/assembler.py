@@ -1,5 +1,12 @@
-from ops import ops
+from .ops import ops
 import re
+
+
+# Handle file check for python 3
+import sys
+if sys.version_info[0] == 3:
+    from io import IOBase
+    file = IOBase
 
 num_formats = [
     '\$([\dabcdefABCDEF]{1,4})',
@@ -57,9 +64,9 @@ class Assembler:
     def assemble(self, asm, output_dest=None):
         self.out = []
 
-        if type(asm) == str:
+        if isinstance(asm, str):
             lines = asm.split('\n')
-        elif type(asm) == file:
+        elif isinstance(asm, file):
             lines = list(asm.readlines())
 
         for l in lines:
@@ -82,7 +89,7 @@ class Assembler:
                 f.write(bytearray(self.out))
 
 
-            
+
         return self.out
 
     def assembleTokens(self, tokens):
@@ -95,7 +102,7 @@ class Assembler:
             t, n = self.getArgument(tokens[1])
             if n is not None:
                 # If zero page is not available switch to absolute
-                if t not in ops[op] and t == 'z': 
+                if t not in ops[op] and t == 'z':
                     t = 'a'
 
                 self.out.append(ops[op][t])
@@ -159,8 +166,14 @@ class Assembler:
                 j = 0
                 l = len(self.out)
 
+                # Keep track of the number of 'LABEL' tags that are still in self.out because
+                # we need to compensate for them in branch instructions that go backwards
+                num_labels = 0
+
                 while j < len(self.out):
-                    if type(self.out[j]) == str and j != i and \
+                    if type(self.out[j]) == str and self.out[j] == "LABEL":
+                        num_labels += 1
+                    elif type(self.out[j]) == str and j != i and \
                         re.search("^[\(#]*%s([\),]|$)" % self.out[i], self.out[j]):
 
                         if type(self.out[j-1]) == int: #BYTE
@@ -178,7 +191,7 @@ class Assembler:
 
                         if op in ["BCC", "BCS", "BEQ", "BMI", "BNE", "BPL", "BVC"]:
                             new.append(ops[op]['z'])
-                            c = j + self.start
+                            c = j + self.start - num_labels*2
                             if n < c:
                                 d = n - c
                             else:
@@ -193,7 +206,7 @@ class Assembler:
 
                         else:
                             if 'z' in t:
-                                t = t.replace("z", "a")                            
+                                t = t.replace("z", "a")
                             new.append(ops[op][t])
 
                             new.append(n & 0xff)
@@ -231,21 +244,20 @@ class Assembler:
                 elif s.group(2):
                     t, n, v  = (r[0], int(s.group(2), 2), s.group(2))
                     break
-                elif s.group(3):    
+                elif s.group(3):
                     t, n, v  = (r[0], int(s.group(3), 8), s.group(3))
                     break
-                elif s.group(4):    
+                elif s.group(4):
                     t, n, v  = (r[0], int(s.group(4), 10), s.group(4))
                     break
-                elif s.group(5):    
+                elif s.group(5):
                     t, n, v  = (r[0], self.symbols.get(s.group(5), None), s.group(5))
                     break
 
-        if t[0] == "z" and (n > 0xff or len(v) == 4):
+        if t[0] == "z" and n and (n > 0xff or len(v) == 4):
             t = t.replace("z", "a")
 
         if n is not None and n < 0:
             n = n & 0xff
 
         return t, n
-
